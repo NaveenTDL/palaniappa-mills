@@ -1,0 +1,745 @@
+
+	
+[Button:StockExportB]
+	
+	Title	:"Stock Export"
+	Key		:F4
+	Action	:Call:TSPLFunctionJSONStock
+
+[Function: TSPLFunctionJSONStock]
+
+000: Set :SVExportFormat : $$SysName:UTF8JSON
+
+005: Set :SVExportLanguage: $$SysName:UTF8JSON
+
+010: Set :SVPrintFileName : E:\New folder\StockExport.JSON;Stock Export.json
+
+015: Export:StockExportJson : Yes:Yes
+
+016: Copy File:"FTP://pmserhe9:Pms%402023%23nan@ftp.pmserode.in/public_html/integration/Tally//StockExport.JSON":"E:\New folder\StockExport.JSON"
+
+017:Call:StockALterFun
+
+
+[Report:StockExportJson]
+
+Form:StockExportJson
+
+[Form:StockExportJson]
+
+Part:StockExportJson
+	
+[Part:StockExportJson]
+	
+	Line:StockExportJson
+	Repeat:StockExportJson:StockitemJsonColl
+	Scroll:Vertical
+	
+	[Line:StockExportJson]
+		
+		Field:JStockIDF, JTallyStockID, JStockName, JStockGroup, JstockCategory, JStkBrand, JSTKUOM, JClosingBal, JCustomerPrice, JDealerPrice, jDistributor;, JSTKpurPrice
+		Field:JSTKTax, JsktMrpRate, JStktaxmodule, jStkDiscountCus, JstkDiscountDealer, JStkDistributor, JstkShippingCost, jStkminOrder, jStkhsnCode, jStkAuction ; JUnitPrice
+		JSONTag:"Item"
+		
+		[Field:JStockIDF]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$WEBStockID THen "NULL" Else $WEBStockID
+			JSONTag : "StkId"
+			
+		[Field:JTallyStockID]
+			
+			Use		: Name Field
+			Set as	: IF $$IsEmpty:$TallyStockID THen "NULL" Else $TallyStockID
+			JSONTag	: "TallyStockID"
+			
+		[Field:JStockName]
+			
+			Use		: Name Field
+			Set as	: $Name
+			JSONTag	: "StkName"
+			
+		[Field:JStockGroup]
+			
+			Use		: Name Field
+			Set as	: If $Parent = $$SysName:Notapplicable Then "NULL" Else $Parent
+			JSONTag : "StkGroup"
+			Set Always:Yes
+			
+		[Field:JstockCategory]
+			
+			Use		: Name Field
+			Set as	: If $Category = $$SysName:Notapplicable Then "NULL" Else $Parent
+			JSONTag : "StkCategory"
+			Set Always:Yes
+			
+		[Field:JStkBrand]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$PStkBrandName THen "NULL" Else $PStkBrandName
+			JSONTag : "StkBrand"
+			Set Always:Yes
+			
+		[Field:JSTKUOM]
+			
+			Use		: Name Field
+			Set as	: $Baseunits
+			JSONTag	: "UOM"
+			
+		[Field:JClosingBal]
+			
+			Use		: Number Field
+			Set as	: $ClosingBalance
+			JSONTag	: "STKClosingBal"
+			Format	: "no Symbol"
+			
+		[Field:JCustomerPrice]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$CutomerPrice Then 0 Else $$Number:$CutomerPrice
+			JSONTag	: "StkCustomerUnitPrice"
+			
+		[Field:JDealerPrice]
+				
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$DealterPrice Then 0 Else $$Number:$DealterPrice
+			JSONTag	: "StkDealerUnitPrice"
+			
+		[Field:jDistributor]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$DistributorPrice Then 0 Else $$Number:$DistributorPrice
+			JSONTag : "StkDistributorUnitPrice"
+			
+		[Field:JUnitPrice]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$SalesCost THen 0 Else $SalesCost
+			JSONTag	: "STKunitprice"
+			Format	: "no Symbol"
+			
+		[Field:JSTKpurPrice]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$PurchaseCost THen 0 Else $PurchaseCost
+			JSONTag	: "StkPurchasePrice"
+			Format	: "no Symbol"
+			
+		[Field:JSTKTax]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$GSTIGSTRateExport THen "NULL" Else $GSTIGSTRateExport
+			JSONTag	:"StkTax"
+			
+		[Field:JsktMrpRate]
+			
+			Use		: Number Field
+			Set as	: $MRPRate
+			JSONTag	: "StkMRPPrice"
+			
+		[Field:JStktaxmodule]
+			
+			Use		: Name Field
+			Set as	: "exclude"
+			JSONTag	: "StkTaxmodel"
+			
+		[Field:jStkDiscountCus]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$CutomerDis Then 0 Else $CutomerDis
+			Set Always:Yes
+			JSONTag	: "StkCustomerDiscount"
+			
+		[Field:JstkDiscountDealer]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$DealterDis Then 0 Else $DealterDis
+			Set Always:Yes
+			JSONTag	: "StkDealerDiscount"
+			
+		[Field:JStkDistributor]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$DistributorDis Then 0 Else $DistributorDis
+			JSONTag	: "StkDistributorDiscount"
+			
+		[Field:JstkShippingCost]
+			
+			Use		: Number Field
+			Set as	: $PShipingCost
+			JSONTag	: "StkShippingCost"
+			
+		[Field:jStkminOrder]
+			
+			Use		: Number Field
+			Set as	: $pMinmumOrderQTY
+			JSONTag : "StkMinOrdQty"
+			
+		[Field:jStkhsnCode]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$HSNCOde THen "NULL" Else $HSNCOde
+			JSONTag	: "StkHsnCode"
+			
+		[Field:jStkAuction]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$StockAction THen "NULL" Else $StockAction
+			JSONTag	: "StkAction"
+			
+
+[Collection:StockitemJsonColl]
+	
+	Sort:@@Default:$$Number:$TallyStockID
+	
+	Type:StockItem
+	Fetch:Name, ClosingBalance, ClosingValue, ClosingRate
+	Fetch:PStkBrandName, WEBStockID, PDiscountVal, PShipingCost
+	Fetch:pMinmumOrderQTY, GSTHSNCode, GSTIGSTRate, StockAction, GSTIGSTRateExport, TallyStockID
+	
+	Compute:PurchaseCost:$STANDARDCOSTLIST[Last].RATE
+	Compute:SalesCost	:$STANDARDPRICELIST[Last].Rate
+	
+	Compute:CutomerPrice	:$FULLPRICELIST[Last,@@IsDateCutomerFilter].PRICELEVELLIST.RATE
+	Compute:DealterPrice	:$FULLPRICELIST[Last,@@IsDateDealterPrice].PRICELEVELLIST.RATE
+	Compute:DistributorPrice:$FULLPRICELIST[Last,@@IsDateDistributorPrice].PRICELEVELLIST.RATE
+	
+	Compute:CutomerDis		:$FULLPRICELIST[Last,@@IsDateCutomerFilter].PRICELEVELLIST.DISCOUNT
+	Compute:DealterDis		:$FULLPRICELIST[Last,@@IsDateDealterPrice].PRICELEVELLIST.DISCOUNT
+	Compute:DistributorDis	:$FULLPRICELIST[Last,@@IsDateDistributorPrice].PRICELEVELLIST.DISCOUNT
+	
+	Compute:MRPRate			:$MRPDETAILS[Last,@@IsMrpRateFIlter].MRPRATEDETAILS.MRPRATE
+	
+
+	Compute:HSNCOde:$GSTDETAILS[Last].HSNCODE
+	
+	;Filter:IsItemOnly
+	
+	Filter:IsNotExported
+	
+	;Filter:ItemFilter
+	
+;Select $Name, $GSTIGSTRateExport, $CutomerPrice, $HSNCOde From StockitemJsonColl
+	
+[System:Formulas]
+	
+	IgstOnlyRate:$GSTRATEDUTYHEAD = "Integrated Tax"
+	
+	ItemFilter:$name = "014 GEM BEARING"
+	
+	IsNotExported:"Exported" != $StockAction and "Imported" != $StockAction
+	
+	IsDateCutomerFilter:$$Date:@@MachineDate >= $$Date:$Date and $PRICELEVEL = "Customer"
+	
+	IsDateDealterPrice:$$Date:@@MachineDate >= $$Date:$Date and $PRICELEVEL = "Dealler"
+		
+	IsDateDistributorPrice:$$Date:@@MachineDate >= $$Date:$Date and $PRICELEVEL = "Distributor"
+	
+	IsMrpRateFIlter:$$Date:@@MachineDate >= $$Date:$Date	
+	
+	
+		
+	IsItemOnly:$Name = "014 GEM BEARING"
+	
+[#Object:StockItem]
+	
+	GSTIGSTRateExport : $$GetInfoFromHierarchy:$Name:"StockItem":"GSTRate":@@MachineDate:"GST":0:@@IGSTDutyHead
+	
+
+[Function:StockALterFun]
+	
+	Variable:xlpCounter:Number
+	
+	
+	00:Start Progress : ($$NumItems:StockitemJsonColl) : "Stock Item" : "Alter" 	
+	00A:Set: xlpCounter : 1
+	
+	01:Walk Collection:StockitemJsonColl
+	
+	02:New Object:StockItem:$Name
+	
+	03:Set Value:StockAction:"Exported"
+	
+	04:Show Progress:##xlpCounter
+	05:Increment:xlpCounter
+	
+	06:Alter Target
+	07:End Walk
+	08:End Progress
+	
+	
+	
+
+;-------- Stock Import -----------------------;
+
+
+[Report:StockImport_RP]
+	
+	Title:"Stock Import"
+	
+[Form:StockImport_RP]
+	
+	Parts	: Form SubTitle, JsonStockImport_Prt
+						
+	Local	: Part	: Form SubTitle : Add			: Line: At End : Plain SubTitle
+	Local	: Field	: Form SubTitle : Info			: $$LocaleString:"Import of Vouchers"
+	Local	: Line 	: Form SubTitle : Delete		: Space Bottom	
+	Local	: Line 	: Plain SubTitle: Space Bottom	: 1		
+	Local	: Field	: Plain SubTitle: Info			: $$LocaleString:"(Only Json files (*.Json, *.Json) are allowed)"
+	Local	: Field	: Plain SubTitle: Style 		: Normal Italic
+	
+	on:Form Accept:True:Call:StockItemImport
+	
+	[Part:JsonStockImport_Prt]
+		
+		Line:JsonStockImport_Prt
+		
+		[Line:JsonStockImport_Prt]
+			
+			Field:Mediumprompt, JsonStockimportFLD
+			
+			Local:Field:MediumPrompt:Info:"Import Json File"
+			
+			[Field:JsonStockimportFLD]
+				
+				Use		: Name Field
+				Set as	: "https://pmserode.in/integration/Web/product.json";"ftp://pmserhe9@ftp.pmserode.in/integration/product.json";"D:\Palaniyapa Mills\Json\product.json"
+				Full Width:Yes
+				
+[Collection:PalaniyappaMillsSrc]
+	
+	Data Source:HTTP JSON:"https://pmserode.in/integration/Web/product.json";#JsonStockimportFLD
+	
+	
+[Collection:PalaniyappaMillsStockMasterSRC]
+	
+	Source Collection:PalaniyappaMillsSrc
+	Walk:Items
+	Fetch:StkId, StkName, StkGroup, StkCategory, StkBrand, UOM
+	Fetch:StkOpeningBal, StkUnitPrice, StkTax, StkTaxModel
+	Fetch:StkShippingCost, StkMinOrdQty, StkDistributorDiscount
+	Fetch:StkDealerDiscount, StkCustomerDiscount
+	Fetch:StkCustomerUnitPrice, StkDealerUnitPrice, StkDistributorUnitPrice
+	Fetch:StkCustomerDiscount, StkDealerDiscount, StkDistributorDiscount
+	Fetch:StkMRPPrice, StkHsncode, StkAction
+	
+	;Select $StkName From PalaniyappaMillsStockMasterSRC
+	
+[Collection:PalaniyappaMillsStockGroup]
+		
+	Source Collection:PalaniyappaMillsSrc
+	Walk:Items
+	Fetch:StkId, StkName, StkGroup, StkCategory, StkBrand, UOM
+	Fetch:StkOpeningBal, StkUnitPrice, StkTax, StkTaxModel
+	Fetch:StkShippingCost, StkMinOrdQty, StkDistributorDiscount
+	Fetch:StkDealerDiscount, StkCustomerDiscount
+	Fetch:StkCustomerUnitPrice, StkDealerUnitPrice, StkDistributorUnitPrice
+	Fetch:StkCustomerDiscount, StkDealerDiscount, StkDistributorDiscount
+	Fetch:StkMRPPrice, StkHsncode, StkAction
+	
+	By:PStockGroup:$StkGroup
+	
+[Collection:PalaniyappaMillsStockCategory]
+	
+	Source Collection:PalaniyappaMillsSrc
+	Walk:Items
+	Fetch:StkId, StkName, StkGroup, StkCategory, StkBrand, UOM
+	Fetch:StkOpeningBal, StkUnitPrice, StkTax, StkTaxModel
+	Fetch:StkShippingCost, StkMinOrdQty, StkDistributorDiscount
+	Fetch:StkDealerDiscount, StkCustomerDiscount
+	Fetch:StkCustomerUnitPrice, StkDealerUnitPrice, StkDistributorUnitPrice
+	Fetch:StkCustomerDiscount, StkDealerDiscount, StkDistributorDiscount
+	Fetch:StkMRPPrice, StkHsncode, StkAction
+	
+	By:PStockCatgory:$StkCategory
+	
+[Collection:PalaniyappaunitsUnits]
+	
+	Source Collection:PalaniyappaMillsSrc
+	Walk:Items
+	Fetch:StkId, StkName, StkGroup, StkCategory, StkBrand, UOM
+	Fetch:StkOpeningBal, StkUnitPrice, StkTax, StkTaxModel
+	Fetch:StkShippingCost, StkMinOrdQty, StkDistributorDiscount
+	Fetch:StkDealerDiscount, StkCustomerDiscount
+	Fetch:StkCustomerUnitPrice, StkDealerUnitPrice, StkDistributorUnitPrice
+	Fetch:StkCustomerDiscount, StkDealerDiscount, StkDistributorDiscount
+	Fetch:StkMRPPrice, StkHsncode, StkAction
+	
+	By:IsUOM:$UOM
+	
+
+[Collection:PalaniyappaMillsStockMaster]
+	
+	Source Collection:PalaniyappaMillsSrc
+	Walk:Items
+	Fetch:StkId, StkName, StkGroup, StkCategory, StkBrand, UOM
+	Fetch:StkOpeningBal, StkUnitPrice, StkTax, StkTaxModel
+	Fetch:StkShippingCost, StkMinOrdQty, StkDistributorDiscount
+	Fetch:StkDealerDiscount, StkCustomerDiscount
+	Fetch:StkCustomerUnitPrice, StkDealerUnitPrice, StkDistributorUnitPrice
+	Fetch:StkCustomerDiscount, StkDealerDiscount, StkDistributorDiscount
+	Fetch:StkMRPPrice, StkHsncode, StkAction
+	
+
+[System:Formula]
+	
+	IsNotEmty:$StkName = "3 PVC MTA HY";Not $$IsEmpty:$StkOpeningBal
+	
+
+[Collection:Items]
+	
+
+[Function:StockGroupImport]
+	
+	01:Walk Collection:PalaniyappaMillsStockGroup
+
+	02:If:$$IsEmpty:$Name:StockGroup:$StkGroup
+
+	03:New Object:StockGroup
+	
+	04:Set Value:Name:$StkGroup
+	05:Set Value:Parent:$$SysName:Primary
+	
+	06:Save Target
+	07:End If
+	08:End Walk
+	
+	
+	09:Call:StockCategoryImport
+	
+[Function:StockCategoryImport]
+	
+	
+	01:Walk Collection:PalaniyappaMillsStockCategory
+
+	02:If:$$IsEmpty:$Name:STOCKCATEGORY:$StkCategory
+
+	03:New Object:STOCKCATEGORY
+	
+	04:Set Value:Name:$StkCategory
+	05:Set Value:Parent:$$SysName:Primary
+	
+	06:Save Target
+	07:End If
+	
+	08:End Walk
+	
+	09:Call:PalaniyappaunitsUnitsFun
+	
+[Function:PalaniyappaunitsUnitsFun]
+	
+	00:Walk Collection:PalaniyappaunitsUnits
+	
+	;01:Log:$UOM
+	
+	02:New Object:UNIT
+	03:Set Value:NAME:$UOM
+	04:Set Value:ISSIMPLEUNIT:Yes
+	05:Set Value:ASORIGINAL:Yes
+	
+	06:Save Target
+	07:End Walk
+	
+	08:Call:StockItemImport
+
+[Function:StockItemImport]
+	
+	Variable:BalanceQtyVar		:String
+	Variable:CustomerPrice		:String
+	Variable:Dealerprice		:String
+	Variable:DistributorPrice	:String
+	Variable:MRPPrice			:String
+	
+	Variable:xlpCounter:Number:0
+	
+	00a:Start Batch Post:100
+	
+	00B:Start Progress : ($$NumItems:PalaniyappaMillsStockMaster) : "Stock Item" : "Create" 	
+	00C:Set: xlpCounter : 1
+;	
+	01:Walk Collection:PalaniyappaMillsStockMaster
+	
+	02:If:$$IsEmpty:$Name:StockItem:$StkName and $StkAction != "update"
+	
+	03:New Object:StockItem
+	
+	03a:Else
+	
+	03B:New Object:StockItem:$StkName
+	
+	03C:End If
+	
+	04:Set Value:Name			:$StkName
+	05:Set Value:Parent			:$StkGroup
+	06:Set Value:PStkBrandName	:$StkBrand
+	07:Set Value:Baseunits		:$UOM
+	08:Set Value:GSTAPPLICABLE	:$$SysName:Applicable
+	09:Set Value:GSTTYPEOFSUPPLY:"Goods"
+	10:Set Value:COSTINGMETHOD	:"Avg. Cost"
+	11:Set Value:VALUATIONMETHOD:"Avg. Price"
+	11a:Set Value:WEBStockID	:$StkId
+	11C:Set Value:PShipingCost	:$StkShippingCost
+	11D:Set Value:pMinmumOrderQTY:$StkMinOrdQty
+	11E:Set Value:Category		:If $$IsEmpty:$StkCategory Then $$SysName:Notapplicable Else $StkCategory
+	11F:Set Value:StockAction		:"Imported"
+	
+	;12:Set:PurchaseValueVar:($$Number:$StkOpeningBal * $$NUmber:$StkPurchasePrice)
+	13:Set:BalanceQtyVar	:$$LocaleString:$StkOpeningBal + $$LocaleString:" " + $$LocaleString:$UOM
+	
+	14:Set:CustomerPrice	:$$LocaleString:$StkCustomerUnitPrice + $$LocaleString:"/" + $$LocaleString:$UOM
+	15:Set:Dealerprice		:$$LocaleString:$StkDealerUnitPrice + $$LocaleString:"/" + $$LocaleString:$UOM
+	15a:Set:DistributorPrice:$$LocaleString:$StkDistributorUnitPrice + $$LocaleString:"/" + $$LocaleString:$UOM
+	15B:Set:MRPPrice		:$$LocaleString:$StkMRPPrice + $$LocaleString:"/" + $$LocaleString:$UOM
+	
+	15C:Log:$StkDistributorUnitPrice
+	
+
+	16:If:Not $$IsEmpty:$StkOpeningBal
+	
+	17:Log:##BalanceQtyVar
+	
+	18:Set Value:OPENINGBALANCE:$$TgtObject:$$AsQty:##BalanceQtyVar
+	19:Set Value:OPENINGRATE	:$$TgtObject:$$AsRate:##StandardPriceVar
+	20:Set Value:OPENINGVALUE	:$$AsAmount:##PurchaseValueVar*-1
+	
+	21:Insert Collection Object	:BATCHALLOCATIONS
+	22:Set Value:GodownName		:"Main Location"
+	23:Set Value:BATCHNAME		:"Primary Batch"
+	24:Set Value:OPENINGBALANCE :$$TgtObject:$$AsQty:##BalanceQtyVar
+	25:Set Value:OPENINGRATE	:$$TgtObject:$$AsRate:##StandardPriceVar
+	26:Set Value:OPENINGVALUE	:$$AsAmount:##PurchaseValueVar*-1
+	27:Set Target:..
+	
+	28:End If
+	
+	
+	29:Insert Collection Object:GSTDETAILS
+	
+	30:Set Value:APPLICABLEFROM	:##SvCurrentDate
+	31:Set Value:CALCULATIONTYPE:"On Value"
+	32:Set Value:HSNCODE		:$StkHsncode
+	33:Set Value:TAXABILITY		:"Taxable"
+	
+	34:Insert Collection Object:STATEWISEDETAILS
+	
+	35:Set Value:STATENAME:$$SysName:Any
+	
+	36:Insert Collection Object:RATEDETAILS
+	37:Set Value:GSTRATEDUTYHEAD		:"Central Tax"
+	38:Set Value:GSTRATEVALUATIONTYPE	:"Based on Value"
+	39:Set Value:GSTRATE				:$$Number:$StkTax / 2
+	40:Set Target:..
+	
+	41:Insert Collection Object:RATEDETAILS
+	42:Set Value:GSTRATEDUTYHEAD		:"State Tax"
+	43:Set Value:GSTRATEVALUATIONTYPE	:"Based on Value"
+	44:Set Value:GSTRATE				:$$Number:$StkTax / 2
+	45:Set Target:..
+	
+	46:Insert Collection Object:RATEDETAILS
+	47:Set Value:GSTRATEDUTYHEAD		:"Integrated Tax"
+	48:Set Value:GSTRATEVALUATIONTYPE	:"Based on Value"
+	49:Set Value:GSTRATE				:$$Number:$StkTax
+	50:Set Target:..
+	51:Set Target:..
+	52:Set Target:..
+	
+	
+	52a:If:$$Number:$StkCustomerUnitPrice != $$Number:0
+	
+	53:Insert Collection Object	:FULLPRICELIST
+	54:Set Value:DATE			:@@MachineDate
+	56:Set Value:PRICELEVEL		:"Customer"
+	
+	57:Insert Collection Object :PRICELEVELLIST
+	57a:Set Value:RATE			:$$TgtObject:$$AsRate:##CustomerPrice
+	57B:Set Value:DISCOUNT		:$StkCustomerDiscount
+	58:Set Target:..
+	59:Set Target:..
+	59a:End If
+	
+	59B:If:$$Number:$StkDealerUnitPrice != $$Number:0
+	
+	60:Insert Collection Object:FULLPRICELIST
+	61:Set Value:DATE			:@@MachineDate
+	62:Set Value:PRICELEVEL		:"Dealer"
+	
+	63:Insert Collection Object :PRICELEVELLIST
+	64:Set Value:RATE			:$$TgtObject:$$AsRate:##CustomerPrice
+	65:Set Value:DISCOUNT		:$StkDealerDiscount
+	67:Set Target:..
+	68:Set Target:..
+	69:End If
+	
+	70:If:$$Number:$StkDistributorUnitPrice != $$Number:0
+	
+	70a:Insert Collection Object:FULLPRICELIST
+	72:Set Value:DATE			:$$Date:@@MachineDate
+	73:Set Value:PRICELEVEL		:"Distributor"
+	
+	74:Insert Collection Object :PRICELEVELLIST
+	75:Set Value:RATE			:$$TgtObject:$$AsRate:##DistributorPrice
+	76:Set Value:DISCOUNT		:$StkDistributorDiscount
+	77:Set Target:..
+	78:Set Target:..
+	79:End If
+	
+	82:If:$$Number:$StkMRPPrice != $$Number:0
+	
+	83:Insert Collection Object	:MRPDETAILS
+	84:Set Value:FROMDATE		:$$Date:MachineDate
+	85:Insert Collection Object	:MRPRATEDETAILS
+	86:Set Value:STATENAME		:$$SysName:ANy
+	87:Set Value:MRPRATE		:$$TgtObject:$$AsRate:##MRPPrice
+	88:Set Target:..
+	89:Set Target:..
+	90:End If
+
+	91:Increment:xlpCounter
+	92:Show Progress:##xlpCounter
+	
+	
+	93a:If:$$IsEmpty:$Name:StockItem:$StkName and $StkAction != "update"
+	
+	94:Save Target
+	
+	94a:Else
+		
+	94B:Alter Target
+	
+	94C:End If
+	
+	95:End Walk
+	96:End Progress
+	97:End Batch Post
+	
+
+[#Part: STKI AdvancedOptions]
+
+	Add:Line	:After:STKI AdvancedOptions : PBrandName, PStkID, PShipingCost, PMinOrderQty ; PDiscount
+
+
+[Line:PBrandName]
+	
+	Field:MediumPrompt, PBrandName
+	Local:Field:MediumPrompt:Info:"Brand Name"
+	Space Bottom:0.1
+	
+	[Field:PBrandName]
+	
+	Use		: Name Field
+	Storage	: PStkBrandName
+	
+[Line:PStkID]
+	
+	Field:PStkIDWeb, PStkTallyID
+	;Invisible:Yes
+	
+[Field:PStkIDWeb]
+		
+	Use		: Name Field
+	Storage	: WEBStockID
+	
+[Field:PStkTallyID]
+	
+	Use		: Number FIeld
+	Storage	: TallyStockID
+	Set as	: If $$InCreateMode THen $$Number:($$CollectionField:$TallyStockID:1:StockITemColl) + $$Number:1 Else $$Value
+	Set Always:Yes
+
+[Collection:StockITemColl]
+	
+	Sort:@@Default:-$TallyStockID
+	
+	Type:StockITem
+	Fetch:Name, TallyStockID
+	
+	;Filter:IsStockFilter
+	
+[System:Formulae]
+	
+	IsStockFilter:"018-BEARING" = $Name
+	
+;Select $Name, $TallyStockID From StockITemColl
+	
+[Line:PDiscount]
+	
+	Field:MediumPrompt, PDiscount
+	Local:Field:MediumPrompt:Info:"Discount"
+	Space Bottom:0.1
+	
+[Field:PDiscount]
+	
+	Use		: Number Field
+	Storage	: PDiscountVal
+	Format	: "No Zero, Percentage"
+	
+[Line:PShipingCost]
+	
+	Field:MediumPrompt, PShipingCost
+	Local:Field:MediumPrompt:Info:"Shiping Cost"
+	Space Bottom:0.1
+	
+[Field:PShipingCost]
+	
+	Use		: Number FIeld
+	Storage	: PShipingCost
+	Format	: "No Zero"
+	
+[Line:PMinOrderQty]
+	
+	Field:MediumPrompt, PMinOrderQty, PCretionAuction
+	Local:Field:MediumPrompt:Info:"Min Order Qty"
+	Space Bottom:0.1
+	
+[Field:PMinOrderQty]
+	
+	Use		: Number Field
+	Storage	: pMinmumOrderQTY
+	Format	: "No Zero"
+	On:Accept:True:Field Accept
+	On:Accept:True:Call:AlterAction
+	
+[Function:AlterAction]
+
+	00:If:$$InAlterMode
+
+	01:Set Value:StockAction:"update"
+	
+	02:Else
+	
+	03:Set Value:StockAction:"Create"
+	
+	04:End If
+	
+[Field:PCretionAuction]
+	
+	Use		: Name Field
+	Storage	: StockAction
+	Set Always:Yes
+	Invisible:Yes
+	
+
+
+[#Form: Multi Price Set]
+
+	Add  : On    : Form Accept   : True   : CALL  : PL Update UDF
+	
+[Function: PL Update UDF]
+
+	Variable: StockItem  	: String
+	Variable: UpDateVar		: String
+	
+
+	00 : WALK COLLECTION : Full Price List
+	10 : SET : StockItem : $StockItemName
+	
+	11 : Set:UpDateVar:"update"
+	
+	12 : New Object:StockItem:##StockItem
+	
+	13 : Set Value:StockAction:"update"
+	
+	14 : Alter Target
+	
+	90 : END WALK

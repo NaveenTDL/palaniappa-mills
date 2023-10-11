@@ -1,0 +1,266 @@
+
+
+[Button:JsonReceiptTrans]
+	
+	Title:"Receipt Export"
+	Key	 : F7
+	Action:Call:ExportReceiptJson
+	
+
+[Function:ExportReceiptJson]
+	
+000: Set :SVExportFormat : $$SysName:UTF8JSON
+
+005: Set :SVExportLanguage: $$SysName:UTF8JSON
+
+010: Set :SVPrintFileName : E:\New folder\TallyReceipt.JSON;Stock Export.json
+
+015: Export:TallyReceptJson : Yes:Yes
+
+016: Copy File:"FTP://pmserhe9:Pms%402023%23nan@ftp.pmserode.in/public_html/integration/Tally//TallyReceipt.JSON":"E:\New folder\TallyReceipt.JSON"
+
+017: Call:ReceiptalterFunction
+
+[Function:ReceiptalterFunction]
+	
+	Variable:IsMasterIDVal:String
+	
+	00:Walk Collection:ReceiptJsonCOllSRC
+
+	02:Set:IsMasterIDVal:$$LocaleString:"ID:" + $$LocaleString:$MasterID
+	
+	03:New Object:Voucher:##IsMasterIDVal
+	
+	04:Set Value:SalAction:"Exported"
+	
+	05:Alter Target
+	
+	06:End Walk
+
+
+[Report:TallyReceptJson]
+
+Form:TallyReceptJson
+
+[Form:TallyReceptJson]
+
+Part:TallyReceptJson
+
+[Part:TallyReceptJson]
+	
+	Line:TallyReceptJson
+	Repeat:TallyReceptJson:ReceiptJsonCOll
+	Scroll:Vertical
+	
+	[Line:TallyReceptJson]
+		
+		Field:InvWebID, InvRecTallyID, InvReceiptNo, InvCustomerName, InvRecMailingName, InvReceiptDate, InvpaymentType, InvTotal, InvRCAction
+		JSONTag:"Receipts"
+		
+		[Field:InvWebID]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$IsSalWebID THen "NULL" ELse $IsSalWebID
+			JSONTag	: "ReceiptWebID"
+			
+		[Field:InvRecTallyID]
+			
+			Use		: Name Field
+			Set as	: $IsMasterID
+			JSONTag	: "ReceiptTallyID"
+		
+		[Field:InvReceiptNo]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$Name Then $VoucherNumber Else $Name
+			JSONTag	: "InvoiceNo"
+			
+		[Field:InvCustomerName]
+			
+			Use		: Name FIeld
+			Set as	: $PartyLedger
+			JSONTag	: "CustomerName"
+			
+		[Field:InvRecMailingName]
+			
+			Use		: Name Field
+			Set as	: $MailingName:Ledger:$PartyLedger
+			JSONTag	: "MailingName"
+			
+		[Field:InvReceiptDate]
+			
+			Use		: Uni Date Field
+			Set as	: $Date
+			JSONTag : "ReceiptDate"
+			
+		[Field:InvpaymentType]
+			
+			Use		: Name FIeld
+			Set as	: iF $Parent:Ledger:$ISBankName = "Cash-in-Hand" Then "cash_on_delivery" Else "Bank"
+			Set Always:Yes
+			JSONTag:"PaymentType"
+			
+		[Field:InvTotal]
+			
+			Use		: Amount Field
+			Set as	: $Amount
+			Set Always:Yes
+			JSONTag : "TotalAmount"
+			
+		[Field:InvRCAction]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$IsAction THen "NULL" Else $IsAction
+			Set Always:Yes
+			JSONTag : "Action"
+
+[Collection:ReceiptJsonCOllSRC]
+	
+	Type:Voucher
+	Fetch:VoucherNUmber, Date, VoucherTypeName, MasterID
+	Fetch:SalAction, SALWEBID
+	
+	Filter:IsReceiptOnly, IsExpImp
+	
+[Collection:ReceiptJsonCOll]
+	
+	Source Collection:ReceiptJsonCOllSRC
+	Walk:LedgerEntries, BillAllocations
+	Fetch:LedgerName, Name, Amount, PartyLedgerName, Date
+	Fetch:SALWEBID, MasterID, SalAction
+	
+	Compute:PartyLedger:$LedgerName
+	
+	Compute:IsSalWebID	:$$Owner:$$Owner:$SALWEBID
+	Compute:IsMasterID	:$$Owner:$$Owner:$MasterID
+	Compute:IsAction	:$$Owner:$$Owner:$SalAction
+	
+	Compute:ISBankName:$$Owner:$$Owner:$LedgerEntries[1,@@IsBankOnly].LedgerName
+	
+	
+[System:Formulae]
+	
+	IsReceiptOnly:$VoucherTypeName = "Web Receipt"
+			
+	IsBankOnly:"Bank Accounts" = $Parent:Ledger:$LedgerName or "Cash-in-Hand" = $Parent:Ledger:$LedgerName
+	
+
+;[#Menu:GateWay of Tally]
+;	
+;;	Add:Key Item:Before:@@LocQuit:Receipt Import:L:Execute:ReceiptImportRP
+	
+[Report:ReceiptImportRP]
+		
+Form:ReceiptImportRP
+
+[Form:ReceiptImportRP]
+	
+	Parts	: Form SubTitle, JsonReceiptImport_Prt
+				
+	Local	: Part	: Form SubTitle : Add			: Line: At End : Plain SubTitle
+	Local	: Field	: Form SubTitle : Info			: $$LocaleString:"Import of Vouchers"
+	Local	: Line 	: Form SubTitle : Delete		: Space Bottom	
+	Local	: Line 	: Plain SubTitle: Space Bottom	: 1		
+	Local	: Field	: Plain SubTitle: Info			: $$LocaleString:"(Only Json files (*.Json, *.Json) are allowed)"
+	Local	: Field	: Plain SubTitle: Style 		: Normal Italic
+
+	on:Form Accept:True:Call:JsonReceiptImport
+	
+
+[Part:JsonReceiptImport_Prt]
+	
+	Line:JsonReceiptImport_Prt
+	
+	[Line:JsonReceiptImport_Prt]
+		
+		Field:MediumPrompt, JsonReceiptImport_Prt
+		
+		Local:Field:MediumPrompt:Info:"Receip Import"
+		
+		[Field:JsonReceiptImport_Prt]
+			
+			Use		: Name Field
+			Set as	: "https://pmserode.in/integration/Web/receipt.json";"D:\Palaniyapa Mills\Json\receipt.json"
+			Width	: @@NameWIdth + @@NameWIdth
+			
+[Collection:JsonReceiptSRC]
+	
+	Data Source:File JSON:"https://pmserode.in/integration/Web/receipt.json";#JsonReceiptImport_Prt
+	
+[Collection:JsonReceiptMain]
+	
+	Source Collection:JsonReceiptSRC
+	Walk:recipts
+	Fetch:ReceiptWebId, ReceiptTallyId, InvoiceNo, Action, ReceiptDate
+	Fetch:CustomerName, PaymentType, TotalAmount, MailingName
+			
+
+[Function:JsonReceiptImport]
+	
+	Variable:LedNameVar:String:""
+
+	01:Walk Collection:JsonReceiptMain
+	
+	02:New Object:Voucher
+	
+	04:Set:SvviewName			:"Accounting Voucher View"
+	05:Set Value:PERSISTEDVIEW	:"Accounting Voucher View"
+	06:Set Value:EFFECTIVEDATE	:$$Date:$ReceiptDate
+	07:Set Value:Date			:$$Date:$ReceiptDate
+	08:Set Value:VoucherNumber	:$InvoiceNo
+	08a:Set Value:SalAction		:"Imported"
+	08B:Set Value:SALWEBID		:$ReceiptWebId
+	
+	09:Set:LedNameVar:If $$IsEmpty:$Name:Ledger:$CustomerName THen $MailingName Else $Name:Ledger:$CustomerName
+	
+	1320	: Insert Collection Object		: ALLLEDGERENTRIES
+	
+	1322	: Set Value	: LEDGERNAME		: ##LedNameVar
+	1324	: Set Value	: ISDEEMEDPOSITIVE	: No
+	1326	: Set Value	: ISPARTYLEDGER		: Yes
+	1328	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+	
+	1329	: If:$isBillWiseon:Ledger:##LedNameVar
+	
+	1330	: Insert Collection Object		: BILLALLOCATIONS 
+	
+	1332	: Set Value	: NAME				: $InvoiceNo
+	1334	: Set Value	: BILLTYPE			: "Agst Ref"
+	1336	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+	
+	1336a	: Set Target:..
+	1337	: End If
+	1337a	: Set Target:..
+	
+	1338	: Insert Collection Object		:  ALLLEDGERENTRIES
+	
+	1340	: Set Value	: LEDGERNAME		: If $PaymentType = "cash_on_delivery" THen "Cash" Else "HDFC BANK SB A/C NO. 00157"
+	1342	: Set Value	: ISDEEMEDPOSITIVE	: Yes
+	1344	: Set Value	: ISPARTYLEDGER		: Yes
+	1348	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+	
+	1348a	: Log:$PaymentType
+	
+	1349	: If:$PaymentType != "cash_on_delivery"
+	 
+	1350	: Insert Collection Object		: BANKALLOCATIONS 
+	
+	1352	: Set Value	: DATE				: $$Date:$ReceiptDate
+	1354	: Set Value	: INSTRUMENTDATE	: $$Date:$ReceiptDate
+	1356	: Set Value	: TRANSACTIONTYPE	: "e-Fund Transfer"
+	1358	: Set Value	: NAME				: $$LocaleString:$InvoiceNo + $$LocaleString:@@MachineTime
+	1360	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+	1362	: Set Value : PaymentMode 		: "Transacted"
+	1364	: Set Value	: PaymentFavouring	: ##LedNameVar
+	1366	: Set Value	: Bankname			: "HDFC BANK SB A/C NO. 00157" 
+	
+	1372	: Set Target:..
+	1373	: End If
+	1374	: Set Target:..
+	
+	1378	: Save Target
+	
+	1379	: End Walk
+	
+	
+	

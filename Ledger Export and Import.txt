@@ -1,0 +1,333 @@
+
+;
+;[System:Events]
+;	
+;	On:Load Company:True:Call:TSPLFunctionJSONLedger
+	;on:Load Company:True:Call:TSPLFunctionJSONStock
+	
+
+	
+[Button:LedgerExportB]
+	
+	Title:"Ledger Export"
+	Key	 : F5
+	Action:Call:TSPLFunctionJSONLedger
+	
+[Function: TSPLFunctionJSONLedger]
+	
+
+000: Set :SVExportFormat : $$SysName:UTF8JSON
+
+005: Set :SVExportLanguage: $$SysName:UTF8JSON
+
+10 : Set:SVUploadExportFormat	:$$SysName:JSON
+011: Set:SVExportFormatVar		:$$SysName:JSON
+
+012: Set:SVPrintFileName		:E:\New folder\LedgerExport.JSON
+
+015: Export:LedgerExportJson:Yes:Yes
+
+016: Copy File:"FTP://pmserhe9:Pms%402023%23nan@ftp.pmserode.in/public_html/integration/Tally//LedgerExport.JSON":"E:\New folder\LedgerExport.JSON"
+
+017: Call:LedgerALterfun
+
+
+[Function:LedgerALterfun]
+	
+	Variable:xlpCounter:Number
+	
+	00:Start Progress : ($$NumItems:JsonExportSRC) : " Ledger " : "Alter" 	
+	00A:Set: xlpCounter : 1
+	
+	01:Walk Collection:JsonExportSRC
+	
+	02:New Object:Ledger:$Name
+	03:Set Value:LedAuction:"Exported"
+	04:Alter Target
+	
+	05:Show Progress:##xlpCounter
+	06:Increment:xlpCounter
+	07:End Walk
+	08:End Progress
+	
+	
+[Report:LedgerExportJson]
+	
+Form:LedgerExportJson
+
+[Form:LedgerExportJson]
+
+Part:LedgerExportJson
+
+[Part:LedgerExportJson]
+	
+	Line:LedgerExportJson
+	Repeat:LedgerExportJson:JsonExportSRC
+	Scroll:Vertical
+	
+	[Line:LedgerExportJson]
+		
+		Field:WEBID, TAllYID, JLedName, JLedLastName, JLedEmail, JledPhoneNumber, JledAction, JLedAddress, JLedState, JLedCountry, JLedPinCode
+		Field:JLedCustomer, JLedPriceLevelName
+		JSONTag:"Users"
+		
+		[Field:WEBID]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LedWebID THen "NULL" Else ""
+			JSONTag	: "ID"
+			
+		[Field:TAllYID]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LedTallyID Then "NULL" Else $LedTallyID
+			JSONTag	: "TallyID"
+			
+		[Field:JLedName]
+			
+			Use		: Name Field
+			Set as	: $Name
+			JSONTag	: "FirstName"
+			
+		[Field:JLedLastName]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LedLastName THen "NULL" Else $LedLastName
+			JSONTag	: "LastName"
+			
+		[Field:JLedEmail]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$EMAIL Then "NULL" Else $EMAIL
+			JSONTag	: "Email"
+			
+		[Field:JledPhoneNumber]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LEDGERPHONE THen "NULL" Else $LEDGERPHONE
+			JSONTag	: "Phone"
+			
+		[Field:JledAction]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LedAuction Then "Alter" Else $LedAuction 
+			JSONTag	: "Action"
+			
+		[Field:JLedAddress]
+			
+			Use		: Name FIeld
+			Set as	: If $$IsEmpty:$FullAddress Then "NULL" Else $FullAddress 
+			JSONTag	: "Address"
+			
+		[Field:JLedState]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LEDSTATENAME Then "NULL" Else $LEDSTATENAME
+			JSONTag	: "State"
+			
+		[Field:JLedCountry]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$COUNTRYOFRESIDENCE Then "NULL" Else $COUNTRYOFRESIDENCE
+			JSONTag	: "Country"
+			
+		[Field:JLedPinCode]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$PINCODE THen "NULL" ELse $PINCODE
+			JSONTag :"PinCode"
+			
+		[Field:JLedCustomer]
+			
+			Use		: Name Field
+			Set as	: "Customer"
+			JSONTag	: "Role"
+			
+		[Field:JLedPriceLevelName]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$PriceLevel Then "NULL" Else $PriceLevel
+			Set Always:Yes
+			JSONTag	: "PriceLevelRole"
+			
+			
+
+[Collection:JsonExportSRC]
+	
+	Sort:@@Default:$$Number:$LedTallyID
+	
+	Type:Ledger
+	Fetch:Name, Parent, COUNTRYOFRESIDENCE, EMAIL, LEDGERPHONE, LEDGERCONTACT, LEDSTATENAME, PINCODE
+	Fetch:LEDGERPHONE, LedLastName, LedTallyID, LedWebID, LedAuction, PriceLevel
+	
+	Compute:FullAddress:$$FullList:Address:$Address
+	
+	Filter:DebtorsOnly, NotLedgerAction
+	
+	
+
+[System:Formulae]
+	
+	DebtorsOnly:$$IsObjectBelongsTo:Group:$Parent:"Sundry Debtors"
+	
+	NotLedgerAction:"Exported" != $LedAuction and "Imported" != $LedAuction
+	
+
+;------------------Ledger Import -----------------------;
+
+[#Part: LED Other Details]
+
+	Add:Line	:After:LED GSTAddlDetails: LedID, LedLastName
+	
+	[Line:LedID]
+
+		Field:LedTallyID, LedWebID, LedAuction
+		Invisible:Yes
+		
+		[Field:LedTallyID]
+			
+			Use		: Number Field
+			Storage	: LedTallyID
+			Set as	: $$Number:$$CollectionField:$LedTallyID:1:LedTallyIDColl + $$Number:1
+			Set Always:Yes
+			Format	: "No Zero"
+			
+[Collection:LedTallyIDColl]
+	
+	Sort:@@Default-$LedTallyID
+	
+	Type:Ledger
+	Fetch:Name, LedTallyID
+	
+	
+;Select $LedTallyID From LedTallyIDColl
+			
+		[Field:LedWebID]
+			
+			Use		: Number FIeld
+			Storage	: LedWebID
+			Format	: "No Zero"
+			
+		[Field:LedAuction]
+			
+			Use		: Name FIeld
+			Storage	: LedAuction
+			Set as	: If $$InCreateMode Then "Create" Else "Alter"
+			Set Always:Yes
+			
+	[Line:LedLastName]
+		
+		Field:MediumPrompt, LedLastName
+		
+		Local:Field:MediumPrompt:Info:"Last Name"
+		
+		[Field:LedLastName]
+			
+			Use		: Name Field
+			Storage	: LedLastName
+			On:Accept:True:Field Accept
+			On:Accept:True:Call:AlterLedMaster
+			
+
+[Function:AlterLedMaster]
+
+	00:If:$$InAlterMode
+
+	01:Set Value:LedAuction:"update"
+	
+	02:Else
+	
+	03:Set Value:LedAuction:"Create"
+	
+	04:End If
+
+;[#Menu:GateWay of Tally]
+;	
+;	Add:Key Item:Before:@@LocQuit:Ledger Interation:S:Execute:LedgerImport_RP
+
+[Report:LedgerImport_RP]
+	
+	Title:"Ledger Import"
+	
+[Form:LedgerImport_RP]
+	
+	Parts	: Form SubTitle, JsonLedgerImport_Prt
+						
+	Local	: Part	: Form SubTitle : Add			: Line: At End : Plain SubTitle
+	Local	: Field	: Form SubTitle : Info			: $$LocaleString:"Import of Vouchers"
+	Local	: Line 	: Form SubTitle : Delete		: Space Bottom	
+	Local	: Line 	: Plain SubTitle: Space Bottom	: 1		
+	Local	: Field	: Plain SubTitle: Info			: $$LocaleString:"(Only Json files (*.Json, *.Json) are allowed)"
+	Local	: Field	: Plain SubTitle: Style 		: Normal Italic
+	
+	on:Form Accept:True:Call:LedgerImportFun
+	
+[Part:JsonLedgerImport_Prt]
+	
+	Line:JsonLedgerImport_Prt
+	
+	[Line:JsonLedgerImport_Prt]
+		
+		Field:MediumPrompt, JsonLedgerImport_Prt
+		
+		Local:Field:MediumPrompt:Info:"Ledger Import"
+		
+		[Field:JsonLedgerImport_Prt]
+			
+			Use		: Name Field
+			Set as	: "https://pmserode.in/integration/Web/customer.json";"D:\Palaniyapa Mills\Json\customer.json"
+			Full Width:Yes
+
+[Collection:LedgerJsonSRC]
+	
+	Data Source:File JSON:"https://pmserode.in/integration/Web/customer.json";#JsonLedgerImport_Prt
+	
+[Collection:LedgerJsonMain]
+	
+	Source Collection:LedgerJsonSRC
+	Walk:Users
+	Fetch:ID, FirstName, LastName, Email, Phone, Action, Address, Role
+	Fetch:State, Country, Pincode, TallyID, MailingName, PriceLevelRole
+
+
+[Function:LedgerImportFun]
+	
+	Variable:xlpCounter:Number:0
+	
+	00:Start Batch Post:100
+	
+	01:Start Progress : ($$NumItems:LedgerJsonMain) : "Ledger " : "Create" 	
+	02:Set: xlpCounter : 1
+	
+	03:Walk Collection:LedgerJsonMain
+	
+	04:New Object:Ledger
+	05:Set Value:Name				:$FirstName
+	06:Set Value:Parent				:"Sundry Debtors"
+	07:Set Value:COUNTRYOFRESIDENCE	:$Country
+	07a:Set Value:COUNTRYNAME		:$Country
+	08:Set Value:EMAIL				:$Email
+	09:Set Value:LEDGERPHONE		:$Phone
+	11:Set Value:LEDSTATENAME		:$State
+	12:Set Value:PINCODE			:$Pincode
+	13:Set Value:LedLastName		:$LastName
+	14:Set Value:LedWebID			:$ID
+	15:Set Value:LedTallyID			:$TallyID
+	15a:Set Value:LedAuction		:"Imported"
+	15B:Set Value:MailingName		:$MailingName
+	15C:Set Value:PriceLevel		:$PriceLevelRole
+	
+	
+	16:Save Target
+
+	17:Increment:xlpCounter	
+	18:Show Progress:##xlpCounter
+
+	19:End Walk
+	20:End Progress
+	21:End Batch Post
+	
+	
+	
+	
+	

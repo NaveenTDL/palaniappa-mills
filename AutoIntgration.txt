@@ -1,0 +1,171 @@
+[#Part: Company F11 Other Features]
+	
+	Local	: Part	: Cfg PartContent		: Add	: Lines	:	At End :ACB Sheduled Mail
+	
+    [Line	:	 ACB Sheduled Mail]
+		
+		Field	:	Medium Prompt,  ACB Sheduled Mail
+		Local	:	Field	:	Medium Prompt	:	Info	:	$$LocaleString:"Enable Sheduled Report Mail?"
+		Local	:	Field	:	Medium Prompt	:	Color	:   Blue
+		
+		[Field	:	ACB Sheduled Mail]
+			
+			Use		    :	Logical Field
+			Storage	    :	ACB Sheduled Mail
+			Set Always	:   Yes
+            Show Table  :   Always
+			Sub Form	:   ACB Sheduled Mail	: $$Value
+			
+[Report	:	ACB Sheduled Mail]
+	
+	Title		: "Auto Email Scheduler"
+	Form		: AS ReportSch
+	
+[Form: AS ReportSch]
+	
+	Part		: Form Sub Title, AS ReportSch
+	Local		: Field	: Form Sub Title	: Info		: "Auto Integration  Scheduler"
+	Full Width	: No
+	Height		: 50% Screen
+	Space Left	: 2 mms
+	Space Right	: 2 mms
+	On:Form Accept:True:Form Accept
+	On:Form Accept:True:Call:MailTimerAutoStart
+	
+[Part: AS ReportSch]
+	
+	Line		: AS ReportSchTit, AS ReportSch
+	Repeat		: AS ReportSch	: ReportScheduler
+	Break On	: $ASSchType = $$SysName:EndofList;$$IsSysName:$ASReportName
+	Scroll		: Vertical
+	
+[Line: AS ReportSchTit]
+	
+	Use			: AS ReportSch
+	Border		: Column Titles
+	Local		: Field	: Default			: Type		: String
+	Local		: Field	: Default			: Delete	: Storage
+	Local		: Field	: Default			: Skip		: Yes
+	Local		: Field	: AS SchType		: Set as	: "Type"
+	Local		: Field	: AS SCH On			: Set as	: "On"
+	Local		: Field	: AS SCH Time		: Set as	: "Time"
+
+[Line: AS ReportSch]
+	
+	Field		: ASSchType, ASSCHTime;ASSCHOn,
+	
+[Field: AS SchType]
+	
+	Use			: Short Name Field
+	Table		: AS Schedule Type,End of List
+	Show Table	: Always
+	Storage		: ASSchType
+
+[Collection: AS Schedule Type]
+	
+	Title		: "List Of Schedules"
+	List		: "Daily"
+    
+
+[Field: ASSCHTime]
+	Type	: Time
+	storage	: ASSchTime
+	Case	: Normal
+	Color 	: Blue
+	Max		: 7
+	Width	: @@NumberWidth
+	Format	: "24 Hour"
+     
+
+[System:Events]
+	
+	;MailStartTimer	: Load Company	:  NOT $$IsRemoteCompany : Call	: MailTimerAutoStart:$$Value
+	MailTimeStart	: Timer	: Yes	: Call	: Mail Schedule Check
+
+[Function:MailTimerAutoStart]	
+	
+	100		: Start Timer	: MailTimeStart	: 60
+	200		: Log			: "Integrate Started"
+	
+[Collection: MailScheduleCheck1]
+	Type:Company
+	Child Of: ##SVCurrentCompany
+	Fetch	: ASReportName, ASSchType, ASSchOn, ASSchTime, ASToMailID, BasicCompanyFormalName,ACBSheduledMail
+	Compute : IsName:$$Owner:$BasicCompanyFormalName
+	
+	Filter:IsEnableCmp
+	
+[Collection:MailScheduleCheck]
+	Source Collection:MailScheduleCheck1
+	Walk:ReportScheduler
+	Fetch	:  ASSchType, ASSchTime, BasicCompanyFormalName,ACBSheduledMail
+
+	
+
+;Select $IsName, $ASSchType,$ACBSheduledMail From MailScheduleCheck
+
+[System:Formulae]
+	IsEnableCmp	:	$ACBSheduledMail = Yes
+    
+[Function: Mail Schedule Check]
+	
+	
+	
+	Variable	: MailSchEnable		: String	: $ACBSheduledMail:Company:##SVCurrentCompany
+	Variable	: MailMonthDay		: Number
+	Variable	: MailToMail		: String
+	
+	;00		: Log:##SvCurrentCompany
+
+    001		: If	: Not @@IsASEnable
+	002		: Stop Timer	: MailTimeStart
+	003		: Log			: "Integrate Stoped"
+	004		: Return
+    005     : End If
+
+	100		: Walk Collection	: Mail Schedule Check
+	200		: If	: $ASSchType = "Daily"
+	300		: Call	: MailTimerCheck:$ASSchTime
+	400		: End If	
+	1000	: End Walk
+    
+[System	:	Formulae]
+	
+	IsASEnable	: $ACBSheduledMail:Company:##SVCurrentCompany
+	ASSchTime	: $ASSchTime:Company:##SVCurrentCompany
+	
+[Function: Mail Timer Check]
+	Parameter	: MailTime			: Time
+	Variable	: CurrTime			: Time	: $$MachineTime
+
+	100 : If 	: ##MailTime = ##CurrTime
+	200 : Call	: TimeLogCheckFunc 
+    500 : End If
+	
+
+;[Collection:AVRCmpCollectionSRC]
+;	
+;	Type:Company
+;	Fetch:CompanyName, Name, IsAggregate, JsonCOmpanyName
+;	
+;	Filter:IsNotGroup
+;
+;[System:Formula]
+;	
+;	IsNotGroup:$IsAggregate = No
+;	IsNotTHisCompany:$Name != "02 AVRSMJL - SVR - 2022 - 23" and $Name != "01 AVR SWARNA MAHAL JEWELRY LIMITED 2022 - 23"
+
+    
+[Function:TimeLogCheckFunc]
+	
+	01:Call:TSPLFunctionJSONStock
+	02:Call:TSPLFunctionJSONLedger
+	03:Call:ExportTransationJson
+	04:Call:ExportReceiptJson
+	
+	05:Call:StockItemImport
+	06:Call:LedgerImportFun
+	07:Call:SalesTransationImportFun
+	08:Call:JsonReceiptImport
+	
+	

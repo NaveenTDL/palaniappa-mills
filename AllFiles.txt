@@ -1,0 +1,74 @@
+
+;[Include:Stock Master Imp .Txt]
+[Include:System UDF.Txt]
+[Include:Stock Export.Txt]
+[Include:Ledger Export and Import.Txt]
+[Include:Transation Export and Import.Txt]
+[Include:ReceiptTrans.Txt]
+[Include:AutoIntgration.Txt]
+
+
+;[System:Events]
+	
+	;On:Load Company:True:Call:LedgerTallyID
+	
+	;On:Load Company:True:Call:StockTallyID
+	
+[#Menu:GateWay Of Tally]
+	
+Add:Key Item:Before:@@LocQuit:"Integration":I:Menu:Integrationval
+
+[Menu:Integrationval]
+
+Key Item:Stock Import		:S:Execute:StockImport_RP
+Item:Blank
+Key Item:Ledger Import		:L:Execute:LedgerImport_RP	
+Item:Blank
+Key Item:Sales Import		:I:Execute:SalesImportRP	
+Item:Blank
+Key Item:Receipt Import		:R:Execute:ReceiptImportRP
+Item:Blank
+
+
+[#Menu:GateWay Of Tally]
+	
+	Add:Button:StockExportB, LedgerExportB, JsonTrasnExport, JsonReceiptTrans
+	
+	
+[Function:LedgerTallyID]
+	
+	Variable:LedIDVar:Number
+	
+	00:Set:LedIDVar:$$Number:1
+	
+	01:Walk Collection:Ledger
+	
+	02:New Object:Ledger:$Name
+	
+	03:Set Value:LedTallyID:##LedIDVar
+	
+	04:Alter Target
+	
+	05:Increment:LedIDVar
+	
+	06:End Walk
+	
+	
+[Function:StockTallyID]
+	
+	Variable:StockIDVar:Number
+
+	00:Set:StockIDVar:$$Number:1
+	
+	02:Walk Collection:StockITemColl
+	
+	04:New Object:StockItem:$Name
+	
+	05:Set Value:TallyStockID:$$Number:##StockIDVar
+	
+	06:Alter Target
+	
+	07:Increment:StockIDVar
+	
+	08:End Walk
+	

@@ -1,0 +1,791 @@
+
+
+[Button:JsonTrasnExport]
+	
+	Title	:"Sales Export"
+	Key		:F6
+	Action	: Call : ExportTransationJson
+	
+[Function:ExportTransationJson]
+	
+000: Set :SVExportFormat 		:$$SysName:UTF8JSON
+
+005: Set :SVExportLanguage		:$$SysName:UTF8JSON
+
+10 : Set:SVUploadExportFormat	:$$SysName:JSON
+011: Set:SVExportFormatVar		:$$SysName:JSON
+
+012: Set:SVPrintFileName		:E:\New folder\SalesTransactionExport.JSON
+
+015: Export:SalesTransaction:Yes:Yes
+
+016: Copy File:"FTP://pmserhe9:Pms%402023%23nan@ftp.pmserode.in/public_html/integration/Tally//SalesTransactionExport.JSON":"E:\New folder\SalesTransactionExport.JSON"
+
+018:Call:ExportedTrans
+
+
+[Function:ExportedTrans]
+	
+	Variable:IsMasterIDVal:String
+	Variable:xlpCounter:Number
+	
+	00:Start Progress : ($$NumItems:SalesVoucherSalesTransSrc) : " Transation " : "Alter" 	
+	0B:Set: xlpCounter : 1
+	
+	0C:Walk Collection:SalesVoucherSalesTransSrc
+
+	02:Set:IsMasterIDVal:$$LocaleString:"ID:" + $$LocaleString:$MasterID
+	
+	03:New Object:Voucher:##IsMasterIDVal
+	
+	04:Set Value:SalAction:"Exported"
+	
+	05:Alter Target
+	
+	06:End Walk
+	
+	
+[Report:SalesTransaction]
+	
+Form:SalesTransaction
+
+[Form:SalesTransaction]
+
+Part:SalesTransaction
+
+[Part:SalesTransaction]
+	
+	Line:SalesVchObject
+	Repeat:SalesVchObject:SalesVoucherSalesTransSrc
+	Scroll:Vertical
+	
+	[Line:SalesVchObject]
+		
+		Field:SalTime, SalesVchFLD, SalesDateFld, SalesCancel, SalesRefund, SalesPartyName, SalMailingName, SalesPartyWebid, SalesPartytallyId, InvBuyerAddress, SalesConsigneeName, InvShipingAddress
+		Field:SalBuyerPincode, SalConsigneePincode, SalBuyerPhoneNo, SalConsigneePhone
+		Field:SalesTotalAmount, SalesTransID, SalesWebID, SalesAction, SalPartyState, SalPartyCountry, SalConsigneeState, SalConsigneeCountry
+		
+		JSONTag:"SalesVoucher"
+		
+		Explode:InventoryVchObj
+		Explode:LedgerentriesVchobj
+		
+		[Field:SalTime]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$SalTime THen "NULL" Else $SalTime
+			JSONTag	: "SalTime"
+		
+		[Field:SalesVchFLD]
+			
+			Use		: Name Field
+			Set as	: $VoucherNumber
+			JSONTag	: "SalVchNo"
+			
+		[Field:SalesDateFld]
+			
+			Use		: Uni Date Field
+			Set as	: $date
+			JSONTag	: "SalesDate"
+			
+		[Field:SalesCancel]
+			
+			Use		: Name Field
+			Set as	: If $ISCANCELLED = Yes THen "CANCELLED" Else "NULL"
+			Set Always:Yes
+			JSONTag:"Cancel"
+			
+		[Field:SalesRefund]
+			
+			Use		: Name FIeld
+			Set as	: If $$IsSales:$VoucherTypeName THen "NULL" Else "REFUNDED"
+			Set Always:Yes
+			JSONTag : "Refund"
+			
+		[Field:SalesPartyName]
+			
+			Use 	: Name Field
+			Set as	: If $$IsEmpty:$PartyLedgerName THen "NULL" Else $PartyLedgerName
+			JSONTag	: "CustomerName"
+			
+		[Field:SalMailingName]
+			
+			Use		: Name Field
+			Set as	: $MailingName:Ledger:$PartyLedgerName
+			JSONTag	: "MailingName"
+			
+		[Field:SalesPartyWebid]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LedWebID:Ledger:$PartyLedgerName THen "NULL" Else $LedWebID:Ledger:$PartyLedgerName
+			JSONTag	: "CustomerWebID"
+			
+		[Field:SalesPartytallyId]
+			
+			Use		: Name FIeld
+			Set as	: If $$IsEmpty:$LedTallyID:Ledger$PartyLedgerName THen "NULL" Else $LedWebID:Ledger:$PartyLedgerName
+			JSONTag	: "CustomerTallyID"
+			
+		[Field:SalesConsigneeName]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$CONSIGNEEMAILINGNAME Then "NULL" Else $CONSIGNEEMAILINGNAME
+			JSONTag	: "ConsigneeName"
+			
+		[Field:SalPartyState]
+			
+			Use		: Name Field
+			Set as	: If $STATENAME = $$SysName:Notapplicable Then "NULL" Else $STATENAME
+			JSONTag	: "BillingState"
+			
+		[Field:SalPartyCountry]
+			
+			Use		: Name FIeld
+			Set as	: If $COUNTRYOFRESIDENCE = $$SysName:Notapplicable Then "NULL" Else $COUNTRYOFRESIDENCE
+			JSONTag	: "BillingCountry"
+			
+		[Field:SalConsigneeState]
+			
+			Use		: Name Field
+			Set as	: If $PLACEOFSUPPLY = $$SysName:Notapplicable Then "NULL" Else $PLACEOFSUPPLY
+			JSONTag	: "ShippingState"
+			
+		[Field:SalConsigneeCountry]
+			
+			Use		: Name Field
+			Set as	: If $CONSIGNEECOUNTRYNAME = $$SysName:Notapplicable Then "NULL" Else $CONSIGNEECOUNTRYNAME
+			JSONTag	: "ShippingCountry"
+			
+		[Field:SalesTotalAmount]
+			
+			Use		: Number Field
+			Set as	: $Amount
+			JSONTag	: "TotalAmount"	
+			
+		[Field:SalesTransID]
+			
+			Use		: Name Field
+			Set as	: $MasterID
+			JSONTag	: "SalesTallyID"
+			
+		[Field:SalesWebID]
+			
+			Use		: Name FIeld
+			Set as	: If $$IsEmpty:$SALWEBID Then "NULL" Else $SALWEBID
+			JSONTag	: "WebID"
+			
+		[Field:SalesAction]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$SalAction Then "NULL" Else $SalAction
+			JSONTag	: "Action"
+		
+		[Field:InvBuyerAddress]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$IsAddress Then "NULL" Else $IsAddress
+			JSONTag	: "BillingAddress"
+		
+		[Field:InvShipingAddress]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$IsConsigneeAdd Then "NULL" Else $IsConsigneeAdd
+			JSONTag	: "ShippingAddress"
+			
+		[Field:SalBuyerPincode]
+			
+			Use		: Name FIeld
+			Set as	: If $$IsEmpty:$PARTYPINCODE THen "NULL" ELse $PARTYPINCODE
+ 			JSONTag	: "BillingPinCode"
+			
+		[Field:SalConsigneePincode]
+			
+			Use		: Name FIeld
+			Set as	: If $$IsEmpty:$CONSIGNEEPINCODE Then "NULL" ELse $CONSIGNEEPINCODE
+			JSONTag	: "ShippingPinCode"
+			
+		[Field:SalBuyerPhoneNo]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LedgerPhone:Ledger:$PartyLedgerName THen "NULL" Else $LedgerPhone:Ledger:$PartyLedgerName
+			JSONTag	: "BillingPhoneNo"
+			
+		[Field:SalConsigneePhone]
+			
+			Use		: Name Field
+			Set as	: If $$IsEmpty:$LedgerPhone:Ledger:$CONSIGNEEMAILINGNAME THen "NULL" Else $LedgerPhone:Ledger:$CONSIGNEEMAILINGNAME
+			JSONTag	: "ShippingPhoneNo"
+			
+			
+			
+[Part:InventoryVchObj]
+	
+	Line:InventoryVchObj
+	Repeat:InventoryVchObj:InventoryEntries
+	
+	[Line:InventoryVchObj]
+		
+		Field:InvStockItem, InvStockWebID, InvStockTallyID, InvTaxRate, DiscountPercentage, DisCountValue, InvBilledQty, InvRate, InvUOM, InvAMount
+		JSONTag:"Itemdetails"
+		
+		[Field:InvStockItem]
+			
+			Use		: NameField
+			Set as	: $Stockitemname
+			JSONTag	: "ItemName"
+			
+		[Field:InvStockWebID]
+			
+			Use		: Number FIeld
+			Set as	: If $$IsEmpty:$WEBStockID:StockItem:$StockItemName Then "NULL" Else $WEBStockID:StockItem:$StockItemName
+			Set Always:Yes
+
+		[Field:InvStockTallyID]
+			
+			Use		: Number Field
+			Set as	: If $$IsEmpty:$TallyStockID:StockItem:$StockITemName THen "NULL" Else $TallyStockID:StockItem:$StockITemName;"NULL"
+			Set Always:Yes
+
+		[Field:InvTaxRate]
+			
+			Use		: Number Field
+			Set as	: $$Number:$GSTIGSTRate:StockITem:$StockItemName;If $$IsEmpty:$GSTIGSTRate:StockITem:$StockItemName THen "NULL" Else $GSTIGSTRate:StockITem:$StockItemName
+			JSONTag	: "Tax"
+			
+		[Field:DiscountPercentage]
+			
+			Use		: Number Field
+			Set as	: IF $$IsEmpty:$$Number:$EIDISCOUNTRATE[1].EIDISCOUNTRATE THen 0 Else $$Number:$EIDISCOUNTRATE[1].EIDISCOUNTRATE
+			JSONTag	: "Dispercentage"
+			
+		[Field:DisCountValue]
+			
+			Use		: Number FIeld
+			Set as	: IF $$IsEmpty:$$Number:($EIDISCOUNTAMT[1].EIDISCOUNTAMT) THen 0 Else $$Number:($EIDISCOUNTAMT[1].EIDISCOUNTAMT)
+			JSONTag	: "DisValue"
+			
+		[Field:InvBilledQty]
+			
+			Use		: Number Field
+			Set as	: $Billedqty
+			JSONTag	: "Quantity"
+			
+		[Field:InvRate]
+			
+			Use		: Number Field
+			Set as	: $Rate
+			JSONTag	: "Rate"
+			
+		[Field:InvUOM]
+			
+			Use		: Name Field
+			Set as	: $Baseunits:Stockitem:$Stockitemname
+			JSONTag	: "UOM"
+			
+		[Field:InvAMount]
+			
+			Use		: Number Field
+			Set as	: $Amount
+			JSONTag	: "Amount"
+
+[Part:LedgerentriesVchobj]
+	
+	Line:LedgerentriesVchobj
+	Repeat: LedgerentriesVchobj:LedgerEntries
+	
+	[Line:LedgerentriesVchobj]
+		
+		Field:Jledgername,Jamount
+		JSONTag:"Ledgerdetails"
+		Empty:$PartyLedgerName = $LedgerName
+		
+		[Field:Jledgername]
+			
+			Use		: Name Field
+			Set as	: $LedgerName
+			JSONTag	: "Ledgername"
+			
+		[Field:Jamount]
+			
+			Use		: Amount Field
+			Set as	: $Amount
+			JSONTag	: "Amount"
+			
+[Collection:SalesVoucherSalesTransSrc]
+	
+	Type:Voucher
+	Fetch:VoucherTypeName, VoucherNumber, Date
+	Fetch:PartyLedgerName, Amount
+	Fetch:InventoryEntries.StockItemName, InventoryEntries.BilledQTy
+	Fetch:InventoryEntries.ActualQty, InventoryEntries.Rate, InventoryEntries.Amount
+	Fetch:LedgerEntries.Amount, LedgerEntries.LedgerName, ISCANCELLED
+	Fetch:ADDRESS.Address, CONSIGNEEMAILINGNAME
+	Fetch:BASICBUYERADDRESS.BASICBUYERADDRESS
+	Fetch:CONSIGNEEMAILINGNAME, STATENAME, PLACEOFSUPPLY, CONSIGNEECOUNTRYNAME
+	Fetch:COUNTRYOFRESIDENCE, SalTime, SalAction SALWEBID, PARTYPINCODE, CONSIGNEEPINCODE
+	Fetch:InventoryEntries.EIDISCOUNTRATE.EIDISCOUNTRATE, InventoryEntries.EIDISCOUNTAMT.EIDISCOUNTAMT
+	
+	Compute:IsAddress:$$FullList:ADDRESS:$Address
+	Compute:IsConsigneeAdd:$$FullList:BASICBUYERADDRESS:$BASICBUYERADDRESS
+		
+	Filter:IsSalesOnly, IsExpImp
+
+[System:Formulae]
+	
+	IsSalesOnly	:"WEB Sales" = $VoucherTypeName or "WEB Credit Note" = $VoucherTypeName
+	IsExpImp	:"Exported" != $SalAction and "Imported" != $SalAction
+
+[#Part: DBLLINE Narration]
+
+	Add:Lines  :Before: VCH NarrPrompt:SalAction
+	
+	[Line:SalAction]
+		
+		Field:SalAction, SalTimeFLD, SalWebID
+				
+	[Field:SalAction]
+		
+		Use		: Name Field
+		Storage	: SalAction
+		Invisible:Yes
+		
+	[Field:SalTimeFLD]
+		
+		Use		: Name Field
+		Storage	: SalTime
+		Set as	: @@MachineTime
+		Set Always:Yes
+		Invisible:Yes
+		
+	[Field:SalWebID]
+		
+		Use		: Name Field
+		Storage	: SALWEBID
+		Invisible:Yes
+		
+[#Field:VchNarration]
+	
+	On:Accept:True:Field Accept
+	On:Accept:True:Call:FillAction
+	
+[Function:FillAction]
+	
+	00:If:$$InCreateMode
+	
+	02:Set Value:SalAction:"Create"
+	
+	03:Else
+	
+	04:Set Value:SalAction:"update"
+	
+	05:End If
+	
+	
+		
+;[#Menu:GateWay of Tally]
+;	
+;	Add:Key Item:Before:@@LocQuit:SalesImport:L:Execute:SalesImportRP
+	
+[Report:SalesImportRP]
+		
+Form:SalesImportRP
+
+[Form:SalesImportRP]
+	
+	Parts	: Form SubTitle, JsonSalesImport_Prt
+				
+	Local	: Part	: Form SubTitle : Add			: Line: At End : Plain SubTitle
+	Local	: Field	: Form SubTitle : Info			: $$LocaleString:"Import of Vouchers"
+	Local	: Line 	: Form SubTitle : Delete		: Space Bottom	
+	Local	: Line 	: Plain SubTitle: Space Bottom	: 1		
+	Local	: Field	: Plain SubTitle: Info			: $$LocaleString:"(Only Json files (*.Json, *.Json) are allowed)"
+	Local	: Field	: Plain SubTitle: Style 		: Normal Italic
+
+	on:Form Accept:True:Call:SalesTransationImportFun
+
+[Part:JsonSalesImport_Prt]
+	
+	Line:JsonSalesImport_Prt
+	
+	[Line:JsonSalesImport_Prt]
+		
+		Field:MediumPrompt, JsonSalesFLD
+		
+		Local:Field:MediumPrompt:Info:"Sales Json Import"
+		
+		[Field:JsonSalesFLD]
+			
+			Use		: Name Field
+			Set as	: "https://pmserode.in/integration/Web/invoice.json";"D:\Palaniyapa Mills\Json\invoice.json"
+			Set Always:Yes
+			Width	: @@NameWIdth + @@NameWIdth
+			
+
+[Collection:TransationSRC]
+	
+	Data Source:File JSON:"https://pmserode.in/integration/Web/invoice.json";#JsonSalesFLD;"D:\Palaniyapa Mills\Json\invoice.json"
+	
+[Collection:TransationMain]
+	
+	Source Collection:TransationSRC
+	Walk:SalesVoucher
+	Fetch:SalVchNo, SalesDate, SalesTime, TotalAmount, SalesTallyID, SalesWebID
+	Fetch:Cancel, Refund, CustomerWebID, CustomerTallyID, CustomerName, BillingAddress
+	Fetch:BillingPhoneNo, BillingState, BillingCountry, BillingPinCode, ConsigneeName
+	Fetch:ShippingAddress, ShippingState, ShippingCountry, ShippingPinCode, Action, PaymentStatus, MailingName
+	
+	Fetch:Itemdetails.InvStockWebID, Itemdetails.InvStockTallyID, Itemdetails.ItemName, Itemdetails.Tax, Itemdetails.Quantity, Itemdetails.Rate
+	Fetch:Itemdetails.UOM, Itemdetails.Amount
+	
+	Fetch:Ledgerdetails.Ledgername, Ledgerdetails.Amount
+			
+
+[Function:SalesTransationImportFun]
+	
+	Variable:IsRate		:String
+	Variable:IsQuantity	:String
+	Variable:LedNameVar	:String
+	
+	01:Walk Collection:TransationMain
+	
+	01a:If: $Refund != "REFUNDED" and $Cancel != "CANCELLED"
+	
+	01B:Set:LedNameVar:If $$IsEmpty:$Name:Ledger:$CustomerName THen $MailingName Else $Name:Ledger:$CustomerName
+	
+	02:New Object:Voucher
+	
+	03:Set		:SvViewName				:"Invoice Voucher View"
+	04:Set Value:PERSISTEDVIEW			:"Invoice Voucher View"
+	05:Set Value:VoucherTypeName		:"WEP Sales"
+	06:Set Value:BASICBUYERNAME			:$ConsigneeName
+	07:Set Value:Date					:$$Date:$SalesDate
+	08:Set Value:VoucherNumber			:$SalVchNo
+	09:Set Value:SALWEBID				:$SalesWebID
+	10:Set Value:SalTime				:$SalesTime
+	11:Set Value:SalAction				:"Imported"
+	;12:Set Value:ISCANCELLED			:If $$IsEmpty:$Cancel THen No Else Yes
+	13:Set Value:PARTYNAME				:##LedNameVar
+	14:Set Value:PartyLedgerName		:##LedNameVar
+	15:Set Value:PARTYPINCODE			:$BillingPinCode
+	16:Set Value:STATENAME				:$BillingState
+	17:Set Value:COUNTRYOFRESIDENCE		:$BillingCountry
+	19:Set Value:PLACEOFSUPPLY			:$ShippingState
+	20:Set Value:CONSIGNEECOUNTRYNAME	:$ShippingCountry
+	21:Set Value:VCHENTRYMODE			:"Item Invoice"
+	22:Set Value:EFFECTIVEDATE			:$$Date:$SalesDate
+	23:Set Value:ISINVOICE				:Yes
+	
+	24:Insert Collection Object:ADDRESS
+	25:Set Value:Address		:$BillingAddress
+	26:Set Target:..
+	
+	27:Insert Collection Object:BASICBUYERADDRESS
+	28:Set Value:BASICBUYERADDRESS	:$ShippingAddress
+	29:Set Target:..
+	
+	29a:Insert Collection Object:LedgerEntries
+	29B:Set Value:LedgerName	:##LedNameVar
+	29C:Set Value:ISDEEMEDPOSITIVE:Yes
+	29D:Set Value:AMOUNT		:$$AsAmount:$TotalAmount*-1
+	
+	29E:Insert Collection Object:BILLALLOCATIONS
+	29F:Set Value:NAME		:$SalVchNo
+	29G:Set Value:BILLTYPE	:"New Ref"
+	29H:Set Value:AMOUNT	:$$AsAmount:$TotalAmount*-1
+	29I:Set Target:..
+	29j:Set Target:..
+	
+	
+	30:Walk Collection:Itemdetails
+	
+	32:Set:IsRate		:$$LocaleString:$Rate + $$LocaleString:"/" + $$LocaleString:$UOM
+	33:Set:IsQuantity	:$$LocaleString:$Quantity + $$LocaleString:" " + $$LocaleString:$UOM
+	
+	
+	34:Insert Collection Object:InventoryEntries
+	
+	34a:Set Value:StockItemName		:$ItemName
+	34b:Set Value:ISDEEMEDPOSITIVE	:NO
+	34C:Set Value:BilledQty			:$$TgtObject:$$AsQty:##IsQuantity*-1
+	36:Set Value:ActualQty			:$$TgtObject:$$AsQty:##IsQuantity*-1
+	37:Set Value:RATE				:$$TgtObject:$$AsRate:##IsRate
+	39:Set Value:Amount				:$$AsAmount:$Amount
+	
+	40:Insert Collection Object:BatchAllocations
+	42:Set Value:GodownName			:"ERODE HO STOCK"
+	43:Set Value:BatchName			:"Primary Batch"
+	44:Set Value:BilledQty			:$$TgtObject:$$AsQty:##IsQuantity*-1
+	45:Set Value:ActualQty			:$$TgtObject:$$AsQty:##IsQuantity*-1
+	46:Set Value:BatchRate			:$$TgtObject:$$AsRate:##IsRate
+	47:Set Value:Amount				:$$AsAmount:$Amount
+	
+	48:Set Target:..
+	
+	49:Insert Collection Object:AccountingAllocations	
+	50:Set Value:LedgerName		:"WEB SIte Sales"
+	51:Set Value:ISDEEMEDPOSITIVE:No
+	52:Set Value:Amount			:$$AsAmount:$Amount
+	53:Set Target:..
+	54:Set Target:..
+	56:End Walk
+	
+	57:Walk Collection:Ledgerdetails
+
+	57a:If:$$Number:$AMOUNT != $$Number:0
+
+	58:Insert Collection Object:LedgerEntries
+	59:Set Value:LedgerName			: $LedgerName
+	60:Set Value:ISDEEMEDPOSITIVE	: No
+	61:Set Value:Amount				:$$AsAmount:$AMOUNT
+	62:Set Target:..
+	63:End If
+	64:End Walk
+	
+	65:Save Target
+
+	66:Else
+	
+	67:Call:CreditNoteFun
+	
+	68:End If
+
+	69:End Walk
+	
+
+[Function:CreditNoteFun]
+;
+	02:New Object:Voucher
+	
+	03:Set		:SvViewName				:"Invoice Voucher View"
+	04:Set Value:PERSISTEDVIEW			:"Invoice Voucher View"
+	05:Set Value:VoucherTypeName		:"WEB Credit Note"
+	06:Set Value:BASICBUYERNAME			:$ConsigneeName
+	07:Set Value:Date					:$$Date:$SalesDate
+	08:Set Value:VoucherNumber			:$SalVchNo
+	09:Set Value:SALWEBID				:$SalesWebID
+	10:Set Value:SalTime				:$SalesTime
+	11:Set Value:SalAction				:"Imported"
+	12:Set Value:ISCANCELLED			:If $$IsEmpty:$Cancel THen No Else Yes
+	13:Set Value:PARTYNAME				:##LedNameVar
+	14:Set Value:PartyLedgerName		:##LedNameVar
+	15:Set Value:PARTYPINCODE			:$BillingPinCode
+	16:Set Value:STATENAME				:$BillingState
+	17:Set Value:COUNTRYOFRESIDENCE		:$BillingCountry
+	19:Set Value:PLACEOFSUPPLY			:$ShippingState
+	20:Set Value:CONSIGNEECOUNTRYNAME	:$ShippingCountry
+	21:Set Value:VCHENTRYMODE			:"Item Invoice"
+	22:Set Value:EFFECTIVEDATE			:$$Date:$SalesDate
+	23:Set Value:ISINVOICE				:Yes
+	23a:Set Value:Narration				:If Not $$IsEmpty:$Cancel THen "Cancel Invoice" ELse ""
+	
+	
+	24:Insert Collection Object:ADDRESS
+	25:Set Value:Address		:$BillingAddress
+	26:Set Target:..
+	
+	27:Insert Collection Object:BASICBUYERADDRESS
+	28:Set Value:BASICBUYERADDRESS	:$ShippingAddress
+	29:Set Target:..
+	
+	29a:Insert Collection Object:LedgerEntries
+	29B:Set Value:LedgerName	:##LedNameVar
+	29C:Set Value:ISDEEMEDPOSITIVE:no
+	29D:Set Value:AMOUNT		:$$AsAmount:$TotalAmount
+	
+	29E:Insert Collection Object:BILLALLOCATIONS
+	29F:Set Value:NAME		:$SalVchNo
+	29G:Set Value:BILLTYPE	:"Agst Ref"
+	29H:Set Value:AMOUNT	:$$AsAmount:$TotalAmount
+	29I:Set Target:..
+	29j:Set Target:..
+	
+	
+	30:Walk Collection:Itemdetails
+	
+	32:Set:IsRate		:$$LocaleString:$Rate + $$LocaleString:"/" + $$LocaleString:$UOM
+	33:Set:IsQuantity	:$$LocaleString:$Quantity + $$LocaleString:" " + $$LocaleString:$UOM
+	
+	33a:Log:$ItemName
+	
+	34:Insert Collection Object:InventoryEntries
+	
+	34a:Set Value:StockItemName		:$ItemName
+	34b:Set Value:ISDEEMEDPOSITIVE	:yes
+	34C:Set Value:BilledQty			:$$TgtObject:$$AsQty:##IsQuantity
+	36:Set Value:ActualQty			:$$TgtObject:$$AsQty:##IsQuantity
+	37:Set Value:RATE				:$$TgtObject:$$AsRate:##IsRate
+	39:Set Value:Amount				:$$AsAmount:$Amount*-1
+	
+	40:Insert Collection Object:BatchAllocations
+	42:Set Value:GodownName			:"ERODE HO STOCK"
+	43:Set Value:BatchName			:"Primary Batch"
+	43a:Set Value:DESTINATIONGODOWNNAME:"ERODE HO STOCK"
+	44:Set Value:BilledQty			:$$TgtObject:$$AsQty:##IsQuantity
+	45:Set Value:ActualQty			:$$TgtObject:$$AsQty:##IsQuantity
+	46:Set Value:BatchRate			:$$TgtObject:$$AsRate:##IsRate
+	47:Set Value:Amount				:$$AsAmount:$Amount*-1
+	
+	48:Set Target:..
+	
+	49:Insert Collection Object:AccountingAllocations	
+	50:Set Value:LedgerName		:"WEB SIte Sales"
+	51:Set Value:ISDEEMEDPOSITIVE:yes
+	52:Set Value:Amount			:$$AsAmount:$Amount*-1
+	53:Set Target:..
+	54:Set Target:..
+	56:End Walk
+	
+	57:Walk Collection:Ledgerdetails
+
+	57a:If:$$Number:$AMOUNT != $$Number:0
+	
+	57B:Log:$AMOUNT
+
+	58:Insert Collection Object:LedgerEntries
+	59:Set Value:LedgerName			: $LedgerName
+	60:Set Value:ISDEEMEDPOSITIVE	: Yes
+	61:Set Value:Amount				:$$AsAmount:$AMOUNT*-1
+	62:Set Target:..
+	63:End If
+	64:End Walk
+	
+	65:Save Target
+	
+	66:If:$Refund = "REFUNDED"
+	
+	67:Call:CRpaymentTrans
+	
+	68:End If
+	
+	
+[Function:CRpaymentTrans]
+	
+	1132	: New Object	: Voucher
+	1134	: Set : SVViewName	 			: $$SysName:AccountingVoucherView
+	1136	: Set Value	: Persisted View 	: $$SysName:AccountingVoucherView 
+	1138	: Set Value	: VoucherTypeName	: "WEB - Payment"
+	1140	: Set Value	: PartyLedgerName	: ##LedNameVar
+	1142	: Set Value	: Date				: $$Date:$SalesDate
+	1143	: Set Value	: VoucherNumber		: $SalVchNo
+	
+	143a	: Log:$SalesDate
+	
+	1146	: Insert Collection Object		: LedgerEntries
+	1148	: Set Value	: LEDGERNAME		: ##LedNameVar
+	1150	: Set Value : ISDEEMEDPOSITIVE	: Yes
+	1152	: Set Value	: ISPARTYLEDGER		: Yes
+	1154	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount*-1
+	
+	1154a	 : If:$isBillWiseon:Ledger:##LedNameVar
+	
+	1156	: Insert Collection Object		: BILLALLOCATIONS
+	1158	: Set Value	: NAME				: $SalVchNo
+	1160	: Set Value	: BILLTYPE			: "Agst Ref"
+	1162	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount*-1
+	
+	1164	: Set Target:..
+	1166	: End If
+	1168	: Set Target:..
+
+	1170	: Insert Collection Object	:LedgerEntries
+	
+	1172	: Set Value	: LEDGERNAME		: "HDFC BANK SB A/C NO. 00157"
+	1174	: Set Value	: ISDEEMEDPOSITIVE	: No
+	1176	: Set Value	: ISPARTYLEDGER		: Yes
+	1178	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+	
+	1180	: Insert Collection Object		: BANKALLOCATIONS
+	
+	1182	: Set Value	: DATE				: $SalesDate
+	1184	: Set Value	: INSTRUMENTDATE	: $SalesDate
+	1186	: Set Value	: TRANSACTIONTYPE	: "e-Fund Transfer"
+	1190	: Set Value	: BANKPARTYNAME		: $CustomerName
+	1191	: Set Value	: NAME				: $SalVchNo
+	1192	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+	1194	: Set Value : PaymentMode 		: "Transacted"
+	1196	: Set Value	: PaymentFavouring	: $CustomerName
+	1198	: Set Value	: Bankname			: "HDFC BANK SB A/C NO. 00157"
+	
+	1200	: Set Target:..
+	1202	: Set Target:..
+
+	1206 	: Save Target
+	
+	
+	
+;-------------;
+
+	
+;	68:Call:ReceiptVoucher
+;	
+;	
+;[Function:ReceiptVoucher]
+;	
+;	;
+;	
+;	01		: Walk Collection:TransationMain
+;	
+;	1306	: New Object	: Voucher
+;	1308	: Set : SVViewName	 			: $$SysName:AccountingVoucherView
+;	1310	: Set Value	: Persisted View 	: $$SysName:AccountingVoucherView
+;	1312	: Set Value	: VOUCHERTYPENAME	: "Web Receipt"
+;	1314	: Set Value	: PARTYLEDGERNAME	: $CustomerName
+;	1316	: Set Value	: Date				: $$Date:$SalesDate
+;	1318	: Set Value	: Narration			: $$LocaleString:##RecNarration +$$LocaleString:"  "+$$LocaleString:##RecNarrationTwo +$$LocaleString:"  " +$$LocaleString:##RecNarrationThree +$$LocaleString:"  " + $$LocaleString:##RecNarrationFour +$$LocaleString:"  " + $$LocaleString:##RecNarrationFive +$$LocaleString:"  "+$$LocaleString:##RecNarrationSix  +$$LocaleString:"  " + $$LocaleString:##RecNarrationSeven
+;	
+;	1320	: Insert Collection Object		: ALLLEDGERENTRIES
+;	
+;	1322	: Set Value	: LEDGERNAME		: $CustomerName
+;	1324	: Set Value	: ISDEEMEDPOSITIVE	: No
+;	1326	: Set Value	: ISPARTYLEDGER		: Yes
+;	1328	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+;	
+;	1329	: If:$isBillWiseon:Ledger:##RecLedgerName
+;	
+;	1330	: Insert Collection Object		: BILLALLOCATIONS 
+;	
+;	1332	: Set Value	: NAME				: $SalVchNo
+;	1334	: Set Value	: BILLTYPE			: "Agst Ref"
+;	1336	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+;	
+;	1336a	: Set Target:..
+;	1337	: End If
+;	1337a	: Set Target:..
+;	
+;	1338	: Insert Collection Object		:  ALLLEDGERENTRIES
+;	
+;	1340	: Set Value	: LEDGERNAME		: ##RecBankName
+;	1342	: Set Value	: ISDEEMEDPOSITIVE	: Yes
+;	1344	: Set Value	: ISPARTYLEDGER		: Yes
+;	1348	: Set Value	: AMOUNT			: $$AsAmount:$TotalAmount
+;	 
+;	1350	: Insert Collection Object		: BANKALLOCATIONS 
+;	
+;	1352	: Set Value	: DATE				: ##ReceivedDate
+;	1354	: Set Value	: INSTRUMENTDATE	: ##ReceivedDate
+;	1356	: Set Value	: TRANSACTIONTYPE	: ##RecTransationType
+;	1358	: Set Value	: NAME				: $$TgtObject:$VoucherNumber 
+;	1360	: Set Value	: AMOUNT			: $$AsAmount:##RecTermTotal
+;	1362	: Set Value : PaymentMode 		: "Transacted"
+;	1364	: Set Value	: PaymentFavouring	: ##RecLedgerName
+;	1366	: Set Value	: Bankname			: ##RecBankName 
+;	1368	: Set Value	: NARRATION			: ##RecNarrationFour 
+;	1370	: Set Value	: CHEQUEPRINTED		: $$TgtObject:$VoucherNumber
+;	
+;	1372	: Set Target:..
+;	1374	: Set Target:..
+;	1376	: Set Target:..
+;	
+;	1378	: Create Target: ..
+;	
+;	1380	: Increment	: RecCountPayable
+;	1382	: End While
+;	1384	: Close File
+;	1386	: Msg Box : Status: Journal  Succesfully
+
+	
+	
+	
+	
+	
+			

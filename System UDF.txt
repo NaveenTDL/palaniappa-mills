@@ -1,0 +1,26 @@
+
+[System:UDF]
+	
+	PStkBrandName	:String:1002
+	WEBStockID		:String:1003
+	PDiscountVal	:Number:1004
+	PShipingCost	:Number:1005
+	pMinmumOrderQTY	:Number:1006
+	StockAction		:String:1007
+	TallyStockID	:NUmber:1008	
+	LedTallyID		:Number:1009
+	LedWebID		:Number:1010
+	LedAuction		:String:1012
+	LedLastName		:String:1013
+	
+	SalAction		:String:1014
+	SalTime			:String:1015
+	SALWEBID		:String:1016
+	
+[System: UDF]
+    
+    ACBSheduledMail :Logical   :1017
+    ReportScheduler :Aggregate :1018
+    ASSchType       :String    :1019
+    ASSchOn         :String    :1020
+    ASSchTime       :Time      :1021

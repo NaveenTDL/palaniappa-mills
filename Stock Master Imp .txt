@@ -1,0 +1,19 @@
+
+;[Include:System UDF.Txt]
+
+
+	
+	
+;[Field:pSTKTaxmodule]
+;	
+;	Use		: Name Field
+;	Storage : StkTaxModel
+;	Table	: INEXModel
+;	
+;[Collection:INEXModel]
+;	
+;	Title:"Tax Model"
+;	
+	
+	
+	
